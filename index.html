@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Ítems</title>
+    <style>
+        .item-container {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #f5f5f5; /* Fondo gris claro por defecto */
+        }
+
+        .item-container.checked {
+            background-color: #e0f7fa; /* Celeste claro para los checks marcados */
+        }
+
+        .custom-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #0288d1; /* Azul para el checkbox */
+        }
+
+        .custom-checkbox:checked {
+            background-color: #0288d1;
+            border-color: #0288d1;
+        }
+
+        .copy-button {
+            background-color: #757575; /* Gris por defecto */
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .copy-button.checked {
+            background-color: #0288d1; /* Azul cuando el checkbox está marcado */
+        }
+
+        .copy-button:hover {
+            background-color: #0277bd; /* Azul más oscuro para el hover */
+        }
+
+        span {
+            font-size: 14px;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button {
+            margin-right: 10px;
+            padding: 5px 10px;
+            background-color: #0288d1;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #0277bd;
+        }
+
+        #fileExtension {
+            width: 60px;
+            margin-left: 10px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #0288d1;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <textarea id="inputText" rows="10" cols="50" placeholder="Escribe los textos aquí, separados por saltos de línea."></textarea>
+        <br>
+        <button onclick="generateItems(1)">Generar por 1 salto de línea</button>
+        <button onclick="generateItems(2)">Generar por 2 saltos de línea</button>
+        <br><br>
+        <button onclick="downloadText()">Descargar Texto</button>
+        <input id="fileExtension" type="text" value=".md" placeholder="Extensión" />
+    </div>
+    <div id="generatedItemsContainer"></div>
+
+    <script>
+        function generateItems(lineBreaks) {
+            const inputText = document.getElementById('inputText').value;
+            const generatedItemsContainer = document.getElementById('generatedItemsContainer');
+            generatedItemsContainer.innerHTML = ''; // Limpiar contenido anterior
+
+            // Separar el texto por uno o dos saltos de línea
+            const separator = lineBreaks === 1 ? '\n' : '\n\n';
+            const items = inputText.split(separator);
+
+            items.forEach((item, index) => {
+                if (item.trim()) { // Ignorar elementos vacíos
+                    // Crear el contenedor de elementos
+                    const container = document.createElement('div');
+                    container.classList.add('item-container');
+                    container.id = `container${index + 1}`;
+
+                    // Crear el checkbox
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `check${index + 1}`;
+                    checkbox.classList.add('custom-checkbox');
+                    checkbox.onclick = function () {
+                        toggleBackground(container.id, checkbox);
+                    };
+
+                    // Crear el botón de copia
+                    const copyButton = document.createElement('button');
+                    copyButton.classList.add('copy-button');
+                    copyButton.innerText = 'Copiar';
+                    copyButton.onclick = function () {
+                        copyToClipboard(copyButton, checkbox.id);
+                    };
+
+                    // Crear el span con el texto
+                    const span = document.createElement('span');
+                    span.innerText = item.trim();
+
+                    // Añadir elementos al contenedor
+                    container.appendChild(checkbox);
+                    container.appendChild(copyButton);
+                    container.appendChild(span);
+
+                    // Añadir el contenedor generado al DOM
+                    generatedItemsContainer.appendChild(container);
+                }
+            });
+        }
+
+        function copyToClipboard(button, checkboxId) {
+            const spanText = button.nextElementSibling.innerText;
+            const tempTextArea = document.createElement("textarea");
+            tempTextArea.style.position = "absolute";
+            tempTextArea.style.left = "-9999px";
+            tempTextArea.value = spanText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempTextArea);
+            const checkbox = document.getElementById(checkboxId);
+            checkbox.checked = true; // Marca el checkbox
+            toggleBackground('container' + checkboxId.replace('check', ''), checkbox);
+        }
+
+        function toggleBackground(containerId, checkbox) {
+            const container = document.getElementById(containerId);
+            const button = container.querySelector('button');
+            
+            if (checkbox.checked) {
+                container.classList.add('checked');
+                button.classList.add('checked');
+            } else {
+                container.classList.remove('checked');
+                button.classList.remove('checked');
+            }
+        }
+
+        function downloadText() {
+            const inputText = document.getElementById('inputText').value;
+            const fileExtension = document.getElementById('fileExtension').value || '.md';
+
+            const blob = new Blob([inputText], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "archivo" + fileExtension;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+
+</body>
+</html>
